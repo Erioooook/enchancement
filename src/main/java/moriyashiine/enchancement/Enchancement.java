@@ -9,8 +9,8 @@ public class Enchancement {
     public static final String MOD_ID = "enchancement";
 
     public Enchancement() {
-        // Конструктор вызывается при загрузке мода
-    }
+    ModItems.ITEMS.register(net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
+}
 
     @SubscribeEvent
     public void onCommonSetup(FMLCommonSetupEvent event) {
