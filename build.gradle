@@ -1,89 +1,52 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version "${loom_version}"
-    id 'io.github.ladysnake.chenille' version "${chenille_version}"
+    id "java"
+    id "net.neoforged.gradle" version "7.0.+" // актуальный неофордж-плагин, при необходимости поправишь
 }
 
-version = project.mod_version
-group = project.maven_group
+group = property("mod_group")
+version = property("mod_version")
 
-chenille {
-    customLicense = rootProject.file("LICENSE")
-    github = new URL("https://github.com/MoriyaShiine/enchancement")
-    javaVersion = 25
-    configurePublishing {
-        withLadysnakeMaven()
-        withGithubRelease()
-        withModrinthRelease()
-        withCurseforgeRelease()
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
     }
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/enchancement.classtweaker")
-}
-
-fabricApi {
-    configureDataGeneration() {
-        client = true
-        modId = project.archives_base_name
-    }
+    withSourcesJar()
 }
 
 repositories {
-    chenille.repositories.ladysnake()
-    chenille.repositories.up()
-    chenille.repositories.terraformers()
-    chenille.repositories.modrinth()
-    maven {
-        name "appleskin"
-        url "https://maven.ryanliptak.com/"
-    }
+    mavenCentral()
+    maven { url = "https://maven.neoforged.net/releases" }
+    // если понадобятся сторонние репы (Cardinal, Ladysnake и т.п.) — добавишь сюда
+}
+
+minecraft {
+    // официальный канал маппингов
+    mappings channel: property("mappings_channel"), version: property("mappings_version")
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${loader_version}"
+    // Неофордж
+    minecraft "net.neoforged:forge:${property('minecraft_version')}-${property('neoforge_version')}"
 
-    api "org.ladysnake.cardinal-components-api:cardinal-components-base:${cardinal_components_version}"
-    api "org.ladysnake.cardinal-components-api:cardinal-components-entity:${cardinal_components_version}"
-    includeApi "org.ladysnake.cardinal-components-api:cardinal-components-block:${cardinal_components_version}"
-    includeApi "org.ladysnake.cardinal-components-api:cardinal-components-level:${cardinal_components_version}"
-    includeApi "maven.modrinth:midnightlib:${midnightlib_version}"
-
-    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-    implementation "moriyashiine:strawberrylib:${strawberrylib_version}"
-
-    compileOnly("squeek.appleskin:appleskin-fabric:${appleskin_version}") {
-        transitive = false
-    }
-    localImplementation "maven.modrinth:sodium:${sodium_version}"
-
-    localRuntime "com.terraformersmc:modmenu:${mod_menu_version}"
-}
-
-processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
-    }
+    // TODO: сюда переносишь все зависимости из fabric-версии (Cardinal Components, Ladysnake и т.д.)
+    // пример:
+    // implementation "org.ladysnake.cardinal-components-api:cardinal-components-base:5.4.0"
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 25
+    options.encoding = "UTF-8"
 }
 
-java {
-    withSourcesJar()
+tasks.processResources {
+    inputs.property "version", project.version
 
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
-}
-
-jar {
-    inputs.property "archivesName", project.base.archivesName
-
-    from("LICENSE") {
-        rename { "${it}_${inputs.properties.archivesName}"}
+    filesMatching(["META-INF/neoforge.mods.toml"]) {
+        expand(
+            "version": project.version,
+            "mod_id": project.property("mod_id"),
+            "mod_name": project.property("mod_name"),
+            "mod_authors": project.property("mod_authors"),
+            "mod_license": project.property("mod_license")
+        )
     }
 }
